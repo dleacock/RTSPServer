@@ -12,6 +12,7 @@ object Main {
   def main(args: Array[String]): Unit = {
 
     implicit val system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "system")
+    implicit val context: ExecutionContextExecutor = system.executionContext
 
     val route = path("test") {
       get {
@@ -20,13 +21,11 @@ object Main {
     }
 
     val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
-
     println("Server online. Press RETURN to stop...")
     StdIn.readLine()
 
     bindingFuture
-      .flatMap(bindingFuture => bindingFuture.unbind())(system.executionContext)
-      .onComplete(done => system.terminate())(system.executionContext)
-
+      .flatMap(bindingFuture => bindingFuture.unbind())
+      .onComplete(_ => system.terminate())
   }
 }
